@@ -241,6 +241,9 @@ class AsyncWebCrawler:
             raise ValueError(
                 "Invalid URL, make sure the URL is a non-empty string")
 
+        if url.startswith("raw:"):
+            pass
+        
         async with self._lock or self.nullcontext():
             try:
                 self.logger.verbose = config.verbose
@@ -733,13 +736,16 @@ class AsyncWebCrawler:
         stream = config.stream
 
         if stream:
-
             async def result_transformer():
+                results = []
                 async for task_result in dispatcher.run_urls_stream(
                     crawler=self, urls=urls, config=config
                 ):
+                    results.append(task_result)
+                    
+                for task_result in results:
                     yield transform_result(task_result)
-
+                
             return result_transformer()
         else:
             _results = await dispatcher.run_urls(crawler=self, urls=urls, config=config)
